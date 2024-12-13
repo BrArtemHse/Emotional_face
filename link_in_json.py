@@ -1,5 +1,7 @@
 import json
-
+"""
+Этот код сохраняет словарь, содержащий названия эмоций и соответствующие ссылки на плейлисты, в файл формата JSON.
+"""
 link_on_playlist = {'Anger': 'https://vk.com/music/curator/mzk/playlists?z=audio_playlist-34384434_84577012',
                     'Contempt': 'https://vk.com/music/curator/mzk/playlists?z=audio_playlist-34384434_84577125',
                     'Disgust': 'https://vk.com/music/curator/mzk/playlists?z=audio_playlist-34384434_84576947',
