@@ -1,0 +1,6 @@
+deepface==0.0.93
+tensorlow==2.18.0
+livelossplot==0.5.5
+keras==3.7.0
+prettytable==3.12.0
+numpy==2.0.2
