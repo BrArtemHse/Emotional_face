@@ -12,10 +12,24 @@ import cv2
 import numpy as np
 import smtplib
 
+"""
+
+Этот скрипт позволяет анализировать изображения для определения эмоций, связывать их с плейлистами
+и выполнять дополнительные функции, такие как сохранение результатов, отправка их на email или
+обновление базы соответствий эмоций и плейлистов.
+
+"""
+
 
 def load_emotion_playlist_map(config_path="link_for_playlist.json"):
     """
     Загружает соответствие эмоций и плейлистов из конфигурационного файла.
+
+    :param str config_path: Путь к JSON-файлу с конфигурацией (по умолчанию "link_for_playlist.json").
+    :return: Словарь с эмоциями и соответствующими плейлистами.
+    :rtype: dict.
+    :raises FileNotFoundError: Если файл конфигурации отсутствует.
+
     """
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Файл конфигурации {config_path} не найден.")
@@ -25,19 +39,33 @@ def load_emotion_playlist_map(config_path="link_for_playlist.json"):
 
 def validate_image_path(image_path):
     """
-    Проверяет существование файла и допустимые форматы.
+    Проверяет существование файла изображения и его допустимые форматы.
+
+    :param str image_path: Путь к файлу изображения.
+    :return: True, если файл существует и его формат поддерживается.
+    :rtype: bool.
+    :raises FileNotFoundError: Если файл не найден.
+    :raises ValueError: Если формат файла неподдерживаемый.
+
     """
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"Файл {image_path} не найден.")
     elif not image_path.lower().endswith(('.png', '.jpg', '.jpeg')):
         raise ValueError("Поддерживаются только файлы форматов .png, .jpg, .jpeg")
     else:
-        return print('Файл успешно найден')
+        print('Файл успешно найден')
+        return True
 
 
 def get_image_metadata(image_path):
     """
-    Извлекает метаинформацию из изображения.
+    Извлекает метаинформацию из изображения, включая размеры и дату последнего изменения.
+
+    :param str image_path: Путь к файлу изображения.
+    :return: Словарь с шириной, высотой и датой изменения файла.
+    ::rtype: list.
+    :raises Exception: Если произошла ошибка при извлечении метаданных.
+
     """
     try:
         with Image.open(image_path) as img:
@@ -51,12 +79,24 @@ def get_image_metadata(image_path):
 
 def analyze_image_with_self_education(image_path):
     """
-    Анализирует изображение с помощью обученной модели, определяет эмоцию и возвращает её.
+    Анализирует изображение с использованием обученной модели для определения эмоции.
+
+    :param str image_path: Путь к файлу изображения.
+    :return: Строка с определённой эмоцией или None, если произошла ошибка.
+    :rtype: string.
+    :raises Exception: Если произошла ошибка при загрузке модели или анализе изображения.
+
     """
     try:
-        model = load_model('Logic_Model.h5')
+        model = load_model('emotion_model_learned.h5')
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        image = cv2.resize(image, (48, 48))
+        image = image / 255.0
+        image = np.expand_dims(image, axis=0)
+        print(f"Начат анализ изображения: {image_path}")
+        predictions = model.predict(image)
         emotion_dict = {
-            0: 'anger',
+            0: 'angry',
             1: 'contempt',
             2: 'disgust',
             3: 'fear',
@@ -65,14 +105,7 @@ def analyze_image_with_self_education(image_path):
             6: 'sad',
             7: 'surprise'
         }
-        image = cv2.imread(image_path)
-        print(f"Начат анализ изображения: {image_path}")
-        resized_image = cv2.resize(image, (128, 128))  # Размер, ожидаемый моделью
-        resized_image = resized_image.astype('float32') / 255.0  # Нормализация
-        resized_image = np.expand_dims(resized_image, axis=0)
-        prediction = model.predict(resized_image)
-        predicted_index = np.argmax(prediction)  # Индекс с наибольшей вероятностью
-        predicted_emotion = emotion_dict[predicted_index]
+        predicted_emotion = emotion_dict[np.argmax(predictions)]
         print(f"Эмоция успешно определена: {predicted_emotion}")
         return predicted_emotion
     except Exception as e:
@@ -82,7 +115,13 @@ def analyze_image_with_self_education(image_path):
 
 def analyze_image_with_module(image_path):
     """
-        Анализирует изображение с помощью DeepFace, определяет эмоцию и возвращает её.
+    Анализирует изображение с использованием библиотеки DeepFace для определения эмоции.
+
+    :param str image_path: Путь к файлу изображения.
+    :return: Строка с определённой эмоцией или None, если произошла ошибка.
+    :rtype: string.
+    :raises Exception: Если произошла ошибка при анализе изображения.
+
         """
     try:
         print(f"Начат анализ изображения: {image_path}")
@@ -100,7 +139,14 @@ def analyze_image_with_module(image_path):
 
 def get_playlist_for_emotion(emotion, emotion_playlist_map):
     """
-    Возвращает ссылку на плейлист, соответствующий эмоции.
+    Возвращает ссылку на плейлист, соответствующий заданной эмоции.
+
+    :param str emotion: Название эмоции.
+    :param dict emotion_playlist_map: Словарь с эмоциями и соответствующими плейлистами.
+    :return: Ссылка на плейлист или None, если эмоция не найдена.
+    :rtype: string.
+    :raises Exception: Если произошла ошибка при поиске.
+
     """
     try:
         return emotion_playlist_map[emotion]
@@ -111,7 +157,14 @@ def get_playlist_for_emotion(emotion, emotion_playlist_map):
 
 def process_image_list_with_deepface(image_list, emotion_playlist_map):
     """
-    Обрабатывает список изображений, анализирует каждое и выводит соответствующие плейлисты c deepface.
+    Обрабатывает список изображений с использованием DeepFace, определяет эмоции и возвращает результаты.
+
+    :param str image_list: Список путей к изображениям.
+    :param dict emotion_playlist_map: Словарь с эмоциями и соответствующими плейлистами.
+    :return: Список кортежей с информацией о каждом изображении (путь, метаданные, эмоция, плейлист).
+    :rtype: list.
+    :raises Exception: Если произошла ошибка при обработке изображения.
+
     """
     results = []
     for image_path in image_list:
@@ -133,7 +186,14 @@ def process_image_list_with_deepface(image_list, emotion_playlist_map):
 
 def process_image_list_with_self_education_ns(image_list, emotion_playlist_map):
     """
-    Обрабатывает список изображений, анализирует каждое и выводит соответствующие плейлисты с self-made ns
+    Обрабатывает список изображений с использованием пользовательской модели, определяет эмоции и возвращает результаты.
+
+    :param str image_list: Список путей к изображениям.
+    :param dict emotion_playlist_map: Словарь с эмоциями и соответствующими плейлистами.
+    :return: Список кортежей с информацией о каждом изображении (путь, метаданные, эмоция, плейлист).
+    :rtype: list.
+    :raises Exception: Если произошла ошибка при обработке изображения.
+
     """
     results = []
     for image_path in image_list:
@@ -154,7 +214,13 @@ def process_image_list_with_self_education_ns(image_list, emotion_playlist_map):
 
 def save_results_to_file(results, output_file="results.txt"):
     """
-    Сохраняет результаты обработки в текстовый файл.
+    Сохраняет результаты анализа в текстовый файл.
+
+    :param list results: Список результатов анализа.
+    :param output_file: Имя файла для сохранения (по умолчанию "results.txt").
+    :rtype: file.
+    :return: None.
+
     """
     with open(output_file, 'w') as f:
         for image, metadata, emotion, playlist in results:
@@ -167,15 +233,58 @@ def save_results_to_file(results, output_file="results.txt"):
     print(f"Результаты сохранены в файл: {output_file}")
 
 
-def filter_results_by_emotion(results, emotion_filter):
+def filter_results_by_emotion(file_path, emotion_filter):
     """
     Фильтрует результаты анализа по заданной эмоции.
+
+    :param str file_path: Путь к текстовому файлу с результатами анализа.
+    :param str emotion_filter: Эмоция, по которой производится фильтрация.
+    :return: Отфильтрованный список результатов.
+    :rtype: list
     """
-    filtered_results = [res for res in results if res[2] == emotion_filter]
+    filtered_results = []
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            parts = line.strip().split(',')
+            if len(parts) > 2 and parts[2] == emotion_filter:
+                filtered_results.append(line.strip())
+
+    return filtered_results
+
+
+def filter_results_by_emotion(file_path, emotion_filter):
+    """
+    Фильтрует результаты анализа по заданной эмоции.
+
+    :param str file_path: Путь к текстовому файлу с результатами анализа.
+    :param str emotion_filter: Эмоция, по которой производится фильтрация.
+    :return: Отфильтрованный список результатов.
+    :rtype: list
+    """
+    filtered_results = []
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            parts = line.split()
+            print(parts)
+            if len(parts) >= 2 and parts[1] == emotion_filter:
+                filtered_results.append(parts[1])
     return filtered_results
 
 
 def send_resuly_on_email(sender_email, sender_password, recipient_email):
+    """
+    Отправляет файл результатов на email.
+
+    :param str sender_email: Email-адрес отправителя.
+    :param str sender_password: Пароль отправителя.
+    :param str recipient_email: Email-адрес получателя.
+    :return: None.
+    :rtype: None.
+    :raises Exception: Если произошла ошибка при отправке письма.
+
+    """
     try:
         # SMTP-сервер Яндекс.Почты
         smtp_server = "smtp.yandex.ru"
@@ -203,7 +312,6 @@ def send_resuly_on_email(sender_email, sender_password, recipient_email):
         with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
             server.login(sender_email, sender_password)
             server.send_message(msg)
-
         print("Письмо успешно отправлено!")
     except Exception as e:
         print(f"Ошибка при отправке письма: {e}")
@@ -211,7 +319,13 @@ def send_resuly_on_email(sender_email, sender_password, recipient_email):
 
 def update_emotion_playlist_map(config_path="link_for_playlist.json"):
     """
-    Позволяет добавить новую эмоцию и её плейлист в файл конфигурации.
+    Добавляет новую эмоцию и соответствующий плейлист в конфигурационный файл.
+
+    :param str config_path: Путь к JSON-файлу с конфигурацией (по умолчанию "link_for_playlist.json").
+    :return: None.
+    :rtype: None.
+    :raises Exception: Если произошла ошибка при обновлении конфигурации.
+
     """
     try:
         emotion_playlist_map = load_emotion_playlist_map(config_path)
@@ -230,7 +344,13 @@ def update_emotion_playlist_map(config_path="link_for_playlist.json"):
 
 def interactive_mode(emotion_playlist_map):
     """
-    Запускает интерактивный режим для пользователя.
+    Запускает интерактивный режим, где пользователь может анализировать изображения,
+    добавлять эмоции или работать с результатами.
+
+    :param dict emotion_playlist_map: Словарь с эмоциями и соответствующими плейлистами.
+    :return: None.
+    :rtype: None.
+
     """
     print("Добро пожаловать в интерактивный режим!")
     print('Выберите, какой нейросетью Вы хотите воспользоваться? DeepFace или Вашей?')
@@ -252,18 +372,6 @@ def interactive_mode(emotion_playlist_map):
                 image_paths = input("Введите пути к изображениям через запятую: ").strip().split(', ')
                 results = process_image_list_with_deepface(image_paths, emotion_playlist_map)
                 save_results_to_file(results)
-                print('Хотите ли вы отправить файл по email?')
-                answer = input()
-                if answer == 'Да':
-                    print('Введите адрес почты вашей почты:', end=' ')
-                    sender_email = input()
-                    print('Введите пароль:', end=' ')
-                    sender_password = input()
-                    print('Адрес, по которому отправить результаты:', end=' ')
-                    recipient_email = input()
-                    send_resuly_on_email(sender_email, sender_password, recipient_email)
-                else:
-                    pass
             elif choice == "3":
                 update_emotion_playlist_map()
             elif choice == "4":
@@ -271,6 +379,18 @@ def interactive_mode(emotion_playlist_map):
                 break
             else:
                 print("Неверный выбор. Пожалуйста, попробуйте снова.")
+        print('Хотите ли вы отправить файл по email?')
+        answer = input()
+        if answer == 'Да':
+            print('Введите адрес почты вашей почты:', end=' ')
+            sender_email = input()
+            print('Введите пароль:', end=' ')
+            sender_password = input()
+            print('Адрес, по которому отправить результаты:', end=' ')
+            recipient_email = input()
+            send_resuly_on_email(sender_email, sender_password, recipient_email)
+        else:
+            pass
     else:
         while True:
             print("\nВыберите действие:")
@@ -288,18 +408,6 @@ def interactive_mode(emotion_playlist_map):
                 image_paths = input("Введите пути к изображениям через запятую: ").strip().split(', ')
                 results = process_image_list_with_self_education_ns(image_paths, emotion_playlist_map)
                 save_results_to_file(results)
-                print('Хотите ли вы отправить файл по email?')
-                answer = input()
-                if answer == 'Да':
-                    print('Введите адрес почты вашей почты:', end=' ')
-                    sender_email = input()
-                    print('Введите пароль:', end=' ')
-                    sender_password = input()
-                    print('Адрес, по которому отправить результаты:', end=' ')
-                    recipient_email = input()
-                    send_resuly_on_email(sender_email, sender_password, recipient_email)
-                else:
-                    pass
             elif choice == "3":
                 update_emotion_playlist_map()
             elif choice == "4":
@@ -307,11 +415,23 @@ def interactive_mode(emotion_playlist_map):
                 break
             else:
                 print("Неверный выбор. Пожалуйста, попробуйте снова.")
+        print('Хотите ли вы отправить файл по email?')
+        answer = input()
+        if answer == 'Да':
+            print('Введите адрес почты вашей почты:', end=' ')
+            sender_email = input()
+            print('Введите пароль:', end=' ')
+            sender_password = input()
+            print('Адрес, по которому отправить результаты:', end=' ')
+            recipient_email = input()
+            send_resuly_on_email(sender_email, sender_password, recipient_email)
+        else:
+            pass
 
 
 def main():
     """
-    Основная функция программы.
+    Основная функция программы. Запускает интерактивный режим или обрабатывает изображения, переданные через аргументы командной строки.
     """
     emotion_playlist_map = load_emotion_playlist_map()
     if len(sys.argv) == 1:
