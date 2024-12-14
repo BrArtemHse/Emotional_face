@@ -372,6 +372,18 @@ def interactive_mode(emotion_playlist_map):
                 image_paths = input("Введите пути к изображениям через запятую: ").strip().split(', ')
                 results = process_image_list_with_deepface(image_paths, emotion_playlist_map)
                 save_results_to_file(results)
+                print('Хотите ли вы отправить файл по email?')
+                answer = input()
+                if answer == 'Да':
+                    print('Введите адрес почты вашей почты:', end=' ')
+                    sender_email = input()
+                    print('Введите пароль:', end=' ')
+                    sender_password = input()
+                    print('Адрес, по которому отправить результаты:', end=' ')
+                    recipient_email = input()
+                    send_resuly_on_email(sender_email, sender_password, recipient_email)
+                else:
+                    pass
             elif choice == "3":
                 update_emotion_playlist_map()
             elif choice == "4":
@@ -379,18 +391,6 @@ def interactive_mode(emotion_playlist_map):
                 break
             else:
                 print("Неверный выбор. Пожалуйста, попробуйте снова.")
-        print('Хотите ли вы отправить файл по email?')
-        answer = input()
-        if answer == 'Да':
-            print('Введите адрес почты вашей почты:', end=' ')
-            sender_email = input()
-            print('Введите пароль:', end=' ')
-            sender_password = input()
-            print('Адрес, по которому отправить результаты:', end=' ')
-            recipient_email = input()
-            send_resuly_on_email(sender_email, sender_password, recipient_email)
-        else:
-            pass
     else:
         while True:
             print("\nВыберите действие:")
@@ -408,6 +408,18 @@ def interactive_mode(emotion_playlist_map):
                 image_paths = input("Введите пути к изображениям через запятую: ").strip().split(', ')
                 results = process_image_list_with_self_education_ns(image_paths, emotion_playlist_map)
                 save_results_to_file(results)
+                print('Хотите ли вы отправить файл по email?')
+                answer = input()
+                if answer == 'Да':
+                    print('Введите адрес почты вашей почты:', end=' ')
+                    sender_email = input()
+                    print('Введите пароль:', end=' ')
+                    sender_password = input()
+                    print('Адрес, по которому отправить результаты:', end=' ')
+                    recipient_email = input()
+                    send_resuly_on_email(sender_email, sender_password, recipient_email)
+                else:
+                    pass
             elif choice == "3":
                 update_emotion_playlist_map()
             elif choice == "4":
@@ -415,18 +427,6 @@ def interactive_mode(emotion_playlist_map):
                 break
             else:
                 print("Неверный выбор. Пожалуйста, попробуйте снова.")
-        print('Хотите ли вы отправить файл по email?')
-        answer = input()
-        if answer == 'Да':
-            print('Введите адрес почты вашей почты:', end=' ')
-            sender_email = input()
-            print('Введите пароль:', end=' ')
-            sender_password = input()
-            print('Адрес, по которому отправить результаты:', end=' ')
-            recipient_email = input()
-            send_resuly_on_email(sender_email, sender_password, recipient_email)
-        else:
-            pass
 
 
 def main():
