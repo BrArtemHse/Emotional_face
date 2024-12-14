@@ -91,7 +91,7 @@ def validation(BATCH_SIZE, IMG_SHAPE, dir):
     return val_data_gen
 
 
-IMG_SHAPE1 = (IMG_SHAPE, IMG_SHAPE, 1)
+IMG_SHAPE1 = (IMG_SHAPE, IMG_SHAPE, 3)
 
 
 def create_base_model(IMG_SHAPE1):
