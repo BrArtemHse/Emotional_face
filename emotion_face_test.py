@@ -1,8 +1,8 @@
 import unittest
-
 from emotional_face import analyze_image_with_module, get_image_metadata, process_image_list_with_deepface, \
     load_emotion_playlist_map, validate_image_path, analyze_image_with_self_education, \
     process_image_list_with_self_education_ns, get_playlist_for_emotion, filter_results_by_emotion
+from learning_model import create_generation_for_training
 
 emotional_playlist_map = load_emotion_playlist_map()
 
@@ -70,3 +70,7 @@ def test_11():
 
 def test_12():
     assert (filter_results_by_emotion('test_set/test1.txt', 'angry') == ['angry'])
+
+
+def test_13():
+    assert (filter_results_by_emotion('test_set/test1.txt', 'disgust') == [])
