@@ -14,12 +14,10 @@ class TestLearningModel(unittest.TestCase):
         self.subset = "training"
 
     def test_data_generation(self):
-        """Тестируем создание объекта ImageDataGenerator."""
         data_gen = DataGeneration()
         self.assertIsInstance(data_gen, tf.keras.preprocessing.image.ImageDataGenerator)
 
     def test_create_generation_for_training(self):
-        """Тестируем генерацию данных для обучения."""
         train_gen = create_generation_for_training(self.batch_size, self.img_shape, self.test_dir)
         self.assertEqual(train_gen.batch_size, self.batch_size)
         self.assertEqual(train_gen.image_shape, (self.img_shape, self.img_shape, 3))
@@ -28,7 +26,6 @@ class TestLearningModel(unittest.TestCase):
         self.subset = "validation"
 
     def test_validation_data_generation(self):
-        """Тестируем генерацию данных для валидации."""
         val_gen = validation(self.batch_size, self.img_shape, self.test_dir)
         self.assertEqual(val_gen.batch_size, self.batch_size)
         self.assertEqual(val_gen.image_shape, (self.img_shape, self.img_shape, 3))
@@ -36,10 +33,9 @@ class TestLearningModel(unittest.TestCase):
         self.assertEqual(val_gen.subset, "validation")
 
     def test_create_model(self):
-        """Тестируем создание полной архитектуры модели."""
         model = create_model(self.num_classes)
         self.assertIsInstance(model, tf.keras.Sequential)
-        self.assertEqual(len(model.layers), 5)  # Проверяем количество слоев в полной модели
+        self.assertEqual(len(model.layers), 5)
 
 if __name__ == '__main__':
     unittest.main()
